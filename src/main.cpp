@@ -114,6 +114,25 @@ void connectToWiFi()
     printConnectionState();
 }
 
+void readSensorData()
+{
+    M5.IMU.getGyroData(&gyroX, &gyroY, &gyroZ);
+    M5.IMU.getAccelData(&accX, &accY, &accZ);
+    M5.IMU.getAhrsData(&pitch, &roll, &yaw);
+    M5.IMU.getTempData(&temp);
+
+    buttonA = M5.BtnA.isPressed();
+    buttonB = M5.BtnB.isPressed();
+    buttonC = M5.BtnC.isPressed();
+}
+
+void sendSensorData()
+{
+    udp.beginPacket(STR(IP), PORT);
+    udp.write((uint8_t*)"Hello!", 6);
+    udp.endPacket();
+}
+
 void setup()
 {
     M5.begin();
@@ -128,21 +147,12 @@ void loop()
 {
     M5.update();
 
-    M5.IMU.getGyroData(&gyroX, &gyroY, &gyroZ);
-    M5.IMU.getAccelData(&accX, &accY, &accZ);
-    M5.IMU.getAhrsData(&pitch, &roll, &yaw);
-    M5.IMU.getTempData(&temp);
-
-    buttonA = M5.BtnA.isPressed();
-    buttonB = M5.BtnB.isPressed();
-    buttonC = M5.BtnC.isPressed();
+    readSensorData();
 
     printSensorValues();
     printButtonStates();
 
-    udp.beginPacket(STR(IP), PORT);
-    udp.write((uint8_t*)"Hello!", 6);
-    udp.endPacket();
+    sendSensorData();
 
     delay(10);
 }
