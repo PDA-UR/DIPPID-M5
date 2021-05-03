@@ -21,6 +21,10 @@ float yaw   = 0.0F;
 
 float temp = 0.0F;
 
+bool buttonA = false;
+bool buttonB = false;
+bool buttonC = false;
+
 void printConnectionCredentials()
 {
     M5.Lcd.setCursor(20, 20);
@@ -55,6 +59,15 @@ void printSensorValues()
     M5.Lcd.printf("Temperature:   %.2f Celsius", temp);
 }
 
+void printButtonStates()
+{
+    M5.Lcd.setCursor(20, 180);
+    M5.Lcd.printf("Buttons: A: %4s B: %4s C: %4s",
+                  buttonA ? "down" : "up",
+                  buttonB ? "down" : "up",
+                  buttonC ? "down" : "up");
+}
+
 void setup()
 {
     M5.begin();
@@ -66,13 +79,19 @@ void setup()
 
 void loop()
 {
+    M5.update();
+
     M5.IMU.getGyroData(&gyroX, &gyroY, &gyroZ);
     M5.IMU.getAccelData(&accX, &accY, &accZ);
     M5.IMU.getAhrsData(&pitch, &roll, &yaw);
     M5.IMU.getTempData(&temp);
 
+    buttonA = M5.BtnA.isPressed();
+    buttonB = M5.BtnB.isPressed();
+    buttonC = M5.BtnC.isPressed();
+
     printSensorValues();
+    printButtonStates();
 
     delay(10);
-    M5.update();
 }
