@@ -35,7 +35,7 @@ float pitch = 0.0F;
 float roll  = 0.0F;
 float yaw   = 0.0F;
 
-float temp = 0.0F;
+float temperature = 0.0F;
 
 bool buttonA = false;
 bool buttonB = false;
@@ -78,7 +78,7 @@ void printSensorValues()
     M5.Lcd.printf("Angle:         X %.2f | Y %.2f | Z %.2f", pitch, roll, yaw);
 
     M5.Lcd.setCursor(20, 180);
-    M5.Lcd.printf("Temperature:   %.2f Celsius", temp);
+    M5.Lcd.printf("Temperature:   %.2f Celsius", temperature);
 }
 
 void printButtonStates()
@@ -119,11 +119,56 @@ void readSensorData()
     M5.IMU.getGyroData(&gyroX, &gyroY, &gyroZ);
     M5.IMU.getAccelData(&accX, &accY, &accZ);
     M5.IMU.getAhrsData(&pitch, &roll, &yaw);
-    M5.IMU.getTempData(&temp);
+    M5.IMU.getTempData(&temperature);
 
     buttonA = M5.BtnA.isPressed();
     buttonB = M5.BtnB.isPressed();
     buttonC = M5.BtnC.isPressed();
+}
+
+void sendTemperatureData()
+{
+    String buffer = String("{\"temperature\":(") + temperature + ")}";
+
+    udp.beginPacket(STR(IP), PORT);
+    udp.write((uint8_t*)buffer.c_str(), buffer.length());
+    udp.endPacket();
+}
+
+void sendRotationData()
+{
+    String buffer = String("{\"rotation\":(") +
+                            pitch + "," +
+                            roll  + "," +
+                            yaw   + ")}";
+
+    udp.beginPacket(STR(IP), PORT);
+    udp.write((uint8_t*)buffer.c_str(), buffer.length());
+    udp.endPacket();
+}
+
+void sendGyroscopeData()
+{
+    String buffer = String("{\"gyroscope\":(") +
+                            gyroX + "," +
+                            gyroY + "," +
+                            gyroZ + ")}";
+
+    udp.beginPacket(STR(IP), PORT);
+    udp.write((uint8_t*)buffer.c_str(), buffer.length());
+    udp.endPacket();
+}
+
+void sendAccelerometerData()
+{
+    String buffer = String("{\"accelerometer\":(") +
+                            accX + "," +
+                            accY + "," +
+                            accZ + ")}";
+
+    udp.beginPacket(STR(IP), PORT);
+    udp.write((uint8_t*)buffer.c_str(), buffer.length());
+    udp.endPacket();
 }
 
 void sendButtonStates()
@@ -151,13 +196,17 @@ void setup()
 void loop()
 {
     M5.update();
+    sendButtonStates();
+    printButtonStates();
 
     readSensorData();
 
-    printSensorValues();
-    printButtonStates();
+    sendAccelerometerData();
+    sendGyroscopeData();
+    sendRotationData();
+    sendTemperatureData();
 
-    sendButtonStates();
+    printSensorValues();
 
     delay(50);
 }
