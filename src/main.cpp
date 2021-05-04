@@ -128,7 +128,7 @@ void readSensorData()
 
 void sendTemperatureData()
 {
-    String buffer = String("{\"temperature\":(") + temperature + ")}";
+    String buffer = String("{\"temperature\":[") + temperature + "]}";
 
     udp.beginPacket(STR(IP), PORT);
     udp.write((uint8_t*)buffer.c_str(), buffer.length());
@@ -137,10 +137,10 @@ void sendTemperatureData()
 
 void sendRotationData()
 {
-    String buffer = String("{\"rotation\":(") +
+    String buffer = String("{\"rotation\":[") +
                             pitch + "," +
                             roll  + "," +
-                            yaw   + ")}";
+                            yaw   + "]}";
 
     udp.beginPacket(STR(IP), PORT);
     udp.write((uint8_t*)buffer.c_str(), buffer.length());
@@ -149,10 +149,10 @@ void sendRotationData()
 
 void sendGyroscopeData()
 {
-    String buffer = String("{\"gyroscope\":(") +
+    String buffer = String("{\"gyroscope\":[") +
                             gyroX + "," +
                             gyroY + "," +
-                            gyroZ + ")}";
+                            gyroZ + "]}";
 
     udp.beginPacket(STR(IP), PORT);
     udp.write((uint8_t*)buffer.c_str(), buffer.length());
@@ -161,10 +161,10 @@ void sendGyroscopeData()
 
 void sendAccelerometerData()
 {
-    String buffer = String("{\"accelerometer\":(") +
+    String buffer = String("{\"accelerometer\":[") +
                             accX + "," +
                             accY + "," +
-                            accZ + ")}";
+                            accZ + "]}";
 
     udp.beginPacket(STR(IP), PORT);
     udp.write((uint8_t*)buffer.c_str(), buffer.length());
@@ -173,10 +173,10 @@ void sendAccelerometerData()
 
 void sendButtonStates()
 {
-    String buffer = String("{\"buttons\":(") +
+    String buffer = String("{\"buttons\":[") +
                             buttonA + "," +
                             buttonB + "," +
-                            buttonC + ")}";
+                            buttonC + "]}";
 
     udp.beginPacket(STR(IP), PORT);
     udp.write((uint8_t*)buffer.c_str(), buffer.length());
