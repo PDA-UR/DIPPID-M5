@@ -126,10 +126,15 @@ void readSensorData()
     buttonC = M5.BtnC.isPressed();
 }
 
-void sendSensorData()
+void sendButtonStates()
 {
+    String buffer = String("{\"buttons\":(") +
+                            buttonA + "," +
+                            buttonB + "," +
+                            buttonC + ")}";
+
     udp.beginPacket(STR(IP), PORT);
-    udp.write((uint8_t*)"Hello!", 6);
+    udp.write((uint8_t*)buffer.c_str(), buffer.length());
     udp.endPacket();
 }
 
@@ -152,7 +157,7 @@ void loop()
     printSensorValues();
     printButtonStates();
 
-    sendSensorData();
+    sendButtonStates();
 
-    delay(10);
+    delay(50);
 }
