@@ -13,7 +13,15 @@
 #define CONNECTING 1
 #define CONNECTED 2
 
+bool SEND_OVER_SERIAL = 1;
+bool SEND_OVER_UDP = 1;
+
 WiFiUDP udp;
+
+char* SSID;
+char* PW;
+char* IP;
+uint16_t PORT;
 
 const char* ConnectionStates[3] = {
     "DISCONNECTED",
@@ -37,27 +45,34 @@ float yaw   = 0.0F;
 
 float temperature = 0.0F;
 
-bool buttonA = false;
-bool buttonB = false;
-bool buttonC = false;
+const int NUM_BUTTONS = 3;
+bool buttons[NUM_BUTTONS];
+
+void showErrorMessage(String message)
+{
+    M5.Lcd.fillRect(0, 0, 320, 240,0);
+    M5.Lcd.setCursor(20, 20);
+    M5.Lcd.print(message);
+}
 
 void printConnectionCredentials()
 {
     M5.Lcd.setCursor(20, 20);
     M5.Lcd.print("SSID: ");
-    M5.Lcd.print(STR(SSID));
+    M5.Lcd.print(SSID);
 
     M5.Lcd.setCursor(20, 40);
     M5.Lcd.print("Password: ");
-    M5.Lcd.print(STR(PW));
+    M5.Lcd.print("*******");
+    //M5.Lcd.print(PW);
 
     M5.Lcd.setCursor(20, 60);
     M5.Lcd.print("IP: ");
-    M5.Lcd.print(STR(IP));
+    M5.Lcd.print(IP);
 
     M5.Lcd.setCursor(20, 80);
     M5.Lcd.print("Port: ");
-    M5.Lcd.print(STR(PORT));
+    M5.Lcd.print(PORT);
 }
 
 void printConnectionState()
@@ -85,20 +100,24 @@ void printButtonStates()
 {
     M5.Lcd.setCursor(20, 200);
     M5.Lcd.printf("Buttons: A: %4s B: %4s C: %4s",
-                  buttonA ? "down" : "up",
-                  buttonB ? "down" : "up",
-                  buttonC ? "down" : "up");
+                  buttons[0] ? "down" : "up",
+                  buttons[1] ? "down" : "up",
+                  buttons[2] ? "down" : "up");
 }
 
 void connectToWiFi()
 {
     printConnectionState();
 
+    // sending over WiFi is disabled, e.g. if WiFi credentials are not set
+    // don't even try to connect and send data only via serial
+    if(!SEND_OVER_UDP) return;
+
     WiFi.mode(WIFI_STA);
 
     delay(100);
 
-    WiFi.begin(STR(SSID), STR(PW));
+    WiFi.begin(SSID, PW);
 
     connectionState = CONNECTING;
 
@@ -121,74 +140,196 @@ void readSensorData()
     M5.IMU.getAhrsData(&pitch, &roll, &yaw);
     M5.IMU.getTempData(&temperature);
 
-    buttonA = M5.BtnA.isPressed();
-    buttonB = M5.BtnB.isPressed();
-    buttonC = M5.BtnC.isPressed();
+    buttons[0] = M5.BtnA.isPressed();
+    buttons[1] = M5.BtnB.isPressed();
+    buttons[2] = M5.BtnC.isPressed();
 }
 
 void sendTemperatureData()
 {
-    String buffer = String("{\"temperature\":[") + temperature + "]}";
+    String buffer = String("{\"temperature\":") + temperature + "}";
 
-    udp.beginPacket(STR(IP), PORT);
-    udp.write((uint8_t*)buffer.c_str(), buffer.length());
-    udp.endPacket();
+    if(SEND_OVER_UDP)
+    {
+        udp.beginPacket(IP, PORT);
+        udp.write((uint8_t*)buffer.c_str(), buffer.length());
+        udp.endPacket();
+    }
+
+    if(SEND_OVER_SERIAL)
+    {
+        Serial.println(buffer);
+    }
 }
 
 void sendRotationData()
 {
-    String buffer = String("{\"rotation\":[") +
-                            pitch + "," +
-                            roll  + "," +
-                            yaw   + "]}";
+    String buffer = String("{\"rotation\":{") +
+                            "\"pitch\":" + pitch + "," +
+                            "\"roll\":"  + roll  + "," +
+                            "\"yaw\":"   + yaw   + "}}";
 
-    udp.beginPacket(STR(IP), PORT);
-    udp.write((uint8_t*)buffer.c_str(), buffer.length());
-    udp.endPacket();
+    if(SEND_OVER_UDP)
+    {
+        udp.beginPacket(IP, PORT);
+        udp.write((uint8_t*)buffer.c_str(), buffer.length());
+        udp.endPacket();
+    }
+
+    if(SEND_OVER_SERIAL)
+    {
+        Serial.println(buffer);
+    }
 }
 
 void sendGyroscopeData()
 {
-    String buffer = String("{\"gyroscope\":[") +
-                            gyroX + "," +
-                            gyroY + "," +
-                            gyroZ + "]}";
+    String buffer = String("{\"gyroscope\":{") +
+                            "\"x\":" + gyroX + "," +
+                            "\"y\":" + gyroY + "," +
+                            "\"z\":" + gyroZ + "}}";
 
-    udp.beginPacket(STR(IP), PORT);
-    udp.write((uint8_t*)buffer.c_str(), buffer.length());
-    udp.endPacket();
+    if(SEND_OVER_UDP)
+    {
+        udp.beginPacket(IP, PORT);
+        udp.write((uint8_t*)buffer.c_str(), buffer.length());
+        udp.endPacket();
+    }
+
+    if(SEND_OVER_SERIAL)
+    {
+        Serial.println(buffer);
+    }
 }
 
 void sendAccelerometerData()
 {
-    String buffer = String("{\"accelerometer\":[") +
-                            accX + "," +
-                            accY + "," +
-                            accZ + "]}";
+    String buffer = String("{\"accelerometer\":{") +
+                            "\"x\":" + accX + "," +
+                            "\"y\":" + accY + "," +
+                            "\"z\":" + accZ + "}}";
 
-    udp.beginPacket(STR(IP), PORT);
-    udp.write((uint8_t*)buffer.c_str(), buffer.length());
-    udp.endPacket();
+    if(SEND_OVER_UDP)
+    {
+        udp.beginPacket(IP, PORT);
+        udp.write((uint8_t*)buffer.c_str(), buffer.length());
+        udp.endPacket();
+    }
+
+    if(SEND_OVER_SERIAL)
+    {
+        Serial.println(buffer);
+    }
 }
 
 void sendButtonStates()
 {
-    String buffer = String("{\"buttons\":[") +
-                            buttonA + "," +
-                            buttonB + "," +
-                            buttonC + "]}";
+    for(int i = 0; i < NUM_BUTTONS; i++)
+    {
+        String buffer = String("{\"button_") + (i + 1) + "\":" + buttons[i] + "}"; 
 
-    udp.beginPacket(STR(IP), PORT);
-    udp.write((uint8_t*)buffer.c_str(), buffer.length());
-    udp.endPacket();
+        if(SEND_OVER_UDP)
+        {
+            udp.beginPacket(IP, PORT);
+            udp.write((uint8_t*)buffer.c_str(), buffer.length());
+            udp.endPacket();
+        }
+
+        if(SEND_OVER_SERIAL)
+        {
+            Serial.println(buffer);
+        }
+    }
+}
+
+bool readCredentialsFromSD()
+{
+    // initialize SD card reader
+    if (!SD.begin(4)) {
+        // show error if the SD card could not be read
+        // for example when it's missing
+        showErrorMessage("could not read SD card");
+        return false;
+    }
+
+    // open 'credentials' file
+    // the file has to be called 'credentials' (without file extension)
+    // it has to be placed in the root directory of the SD card
+    // first line is the WiFi SSID
+    // second line is the WiFi password
+    // third line is the host's IP address
+    // fourth line is the host's port
+    File credentialsFile = SD.open("/credentials");
+
+    // show error when the file is missing
+    if(!credentialsFile)
+    {
+        showErrorMessage("couldn't open file 'credentials' on SD card");
+        return false;
+    }
+
+    String buffer[4]; // buffer for the four lines of the file
+    buffer[0] = "";   // initialize the first buffer
+    int line = 0;     // index of the buffer
+
+    // read the credentials file character by character
+    // and store each line in a separate buffer
+    while(credentialsFile.available())
+    {
+        char c = (char) credentialsFile.read(); // read one character from the file
+
+        if(c == '\n') // reached end of the line
+        {
+            line++; // use the next buffer for the next line
+            if(line > 3) break; // stop after four lines
+            buffer[line] = ""; // initialize the next buffer
+            continue; // we don't want to append the line break to the buffer
+        }
+
+        buffer[line].concat(c); // append the read character to the current buffer
+    }
+
+    // allocate memory for the WiFi credentials
+    SSID = (char*) malloc(buffer[0].length() + 1);
+    PW = (char*) malloc(buffer[1].length() + 1);
+    IP = (char*) malloc(buffer[2].length() + 1);
+
+    // copy the buffered strings to the global variables for WiFi credentials
+    buffer[0].toCharArray(SSID, buffer[0].length() + 1);
+    buffer[1].toCharArray(PW, buffer[1].length() + 1);
+    buffer[2].toCharArray(IP, buffer[2].length() + 1);
+    PORT = buffer[3].toInt();
+
+    return true;
+}
+
+void defineWifiCredentials()
+{
+#ifdef _SSID
+    // if credentials have been set during pre-compilation, use those
+    SSID = STR(_SSID);
+    PW = STR(_PW);
+    IP = STR(_IP);
+    PORT = _PORT;
+#else
+    // else, try to read credentials from the SD card
+    if(!readCredentialsFromSD())
+    {
+        // credentials could not be read from SD card
+        // deactivate sending data over WiFi
+        SEND_OVER_UDP = false;
+    }
+#endif
 }
 
 void setup()
 {
     M5.begin();
+    Wire.begin();
     M5.Power.begin();
     M5.IMU.Init();
     M5.Lcd.setTextSize(1.5);
+    defineWifiCredentials();
     printConnectionCredentials();
     connectToWiFi();
 }

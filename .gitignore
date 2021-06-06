@@ -3,3 +3,4 @@
 *.swo
 .pio
 .piolibdeps
+upload_tmp.sh
