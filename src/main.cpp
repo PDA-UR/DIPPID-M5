@@ -349,5 +349,5 @@ void loop()
 
     printSensorValues();
 
-    delay(50);
+    delay(1);
 }
