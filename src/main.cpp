@@ -326,6 +326,7 @@ void setup()
 {
     M5.begin();
     Wire.begin();
+    M5.Speaker.end(); // disable speaker to turn off humming noise
     M5.Power.begin();
     M5.IMU.Init();
     M5.Lcd.setTextSize(1.5);
