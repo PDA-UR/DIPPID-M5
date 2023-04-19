@@ -48,11 +48,31 @@ float temperature = 0.0F;
 const int NUM_BUTTONS = 3;
 bool buttons[NUM_BUTTONS];
 
+uint8_t batteryPercent;
+bool charging;
+
 void showErrorMessage(String message)
 {
     M5.Lcd.fillRect(0, 0, 320, 240,0);
     M5.Lcd.setCursor(20, 20);
     M5.Lcd.print(message);
+}
+
+void printPowerLevel()
+{
+    M5.Lcd.setCursor(250, 20);
+
+    M5.Lcd.print(batteryPercent);
+    M5.Lcd.print("%");
+
+    if (charging)
+    {
+        M5.Lcd.print(" CHR");
+    }
+    else
+    {
+        M5.Lcd.print(" BAT");
+    }
 }
 
 void printConnectionCredentials()
@@ -94,6 +114,8 @@ void printSensorValues()
 
     M5.Lcd.setCursor(20, 180);
     M5.Lcd.printf("Temperature:   %.2f Celsius", temperature);
+
+    printPowerLevel();
 }
 
 void printButtonStates()
@@ -143,6 +165,10 @@ void readSensorData()
     buttons[0] = M5.BtnA.isPressed();
     buttons[1] = M5.BtnB.isPressed();
     buttons[2] = M5.BtnC.isPressed();
+
+    uint8_t power = M5.Power.getBatteryLevel();
+    batteryPercent = power;
+    charging = M5.Power.isCharging();
 }
 
 void sendTemperatureData()
